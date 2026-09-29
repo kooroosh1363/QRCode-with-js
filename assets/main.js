@@ -6,8 +6,8 @@ import {
   normalizeMode,
   normalizeSize,
   summarizePayload
-} from "./payload.js";
-import { clearHistory, pushHistory, readHistory } from "./history.js";
+} from "../src/payload.js";
+import { clearHistory, pushHistory, readHistory } from "../src/history.js";
 
 const form=document.querySelector("#qr-form");
 const modeInput=document.querySelector("#mode");
