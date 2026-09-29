@@ -1,16 +1,202 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generate QR Code</title>
-    <link rel="stylesheet" href="./assets/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta
+    name="description"
+    content="QRForge is a browser-based QR payload lab for URL, text, email, and Wi-Fi payloads with validation, error-correction controls, PNG export, local history, tests, and CI."
+  >
+  <meta name="color-scheme" content="light">
+  <title>QRForge — QR Payload & Export Lab</title>
+  <link rel="stylesheet" href="./assets/style.css">
 </head>
 <body>
-    <div class="qrCodes" id="qrCodes"></div>
+  <a class="skip-link" href="#workspace">Skip to QR workspace</a>
 
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="./assets/main.js"></script>
+  <header class="site-header">
+    <div>
+      <p class="eyebrow">Browser-only payload engineering</p>
+      <h1>QRForge</h1>
+      <p class="subtitle">
+        Build QR payloads with explicit validation instead of encoding an arbitrary string blindly.
+        URL, text, email, and Wi-Fi formats are normalized before rendering.
+      </p>
+    </div>
+    <div class="header-note">
+      QR images are generated locally. Nothing is sent to a backend by this demo.
+    </div>
+  </header>
+
+  <main id="workspace" class="workspace">
+    <section class="form-panel" aria-labelledby="builder-title">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Builder</p>
+          <h2 id="builder-title">Define the payload</h2>
+        </div>
+      </div>
+
+      <form id="qr-form">
+        <div class="grid-two">
+          <label>
+            <span>Payload type</span>
+            <select id="mode" name="mode">
+              <option value="url">URL</option>
+              <option value="text">Text</option>
+              <option value="email">Email</option>
+              <option value="wifi">Wi-Fi</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Size</span>
+            <select id="size" name="size">
+              <option value="192">192 px</option>
+              <option value="256" selected>256 px</option>
+              <option value="320">320 px</option>
+              <option value="384">384 px</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Error correction</span>
+            <select id="error-level" name="errorLevel">
+              <option value="L">L · low redundancy</option>
+              <option value="M" selected>M · balanced</option>
+              <option value="Q">Q · higher recovery</option>
+              <option value="H">H · maximum recovery</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="mode-panel" data-mode-panel="url">
+          <label>
+            <span>URL</span>
+            <input name="url" type="text" placeholder="example.com/docs" autocomplete="url">
+          </label>
+        </div>
+
+        <div class="mode-panel" data-mode-panel="text" hidden>
+          <label>
+            <span>Text</span>
+            <textarea name="text" rows="5" maxlength="1200" placeholder="Plain text to encode"></textarea>
+          </label>
+        </div>
+
+        <div class="mode-panel" data-mode-panel="email" hidden>
+          <label>
+            <span>Email address</span>
+            <input name="email" type="email" autocomplete="email" placeholder="person@example.com">
+          </label>
+          <label>
+            <span>Subject</span>
+            <input name="subject" type="text" maxlength="140">
+          </label>
+          <label>
+            <span>Body</span>
+            <textarea name="body" rows="4" maxlength="600"></textarea>
+          </label>
+        </div>
+
+        <div class="mode-panel" data-mode-panel="wifi" hidden>
+          <label>
+            <span>Network name (SSID)</span>
+            <input name="ssid" type="text" maxlength="64" autocomplete="off">
+          </label>
+          <div class="grid-two">
+            <label>
+              <span>Security</span>
+              <select name="security">
+                <option value="WPA">WPA/WPA2</option>
+                <option value="WEP">WEP</option>
+                <option value="nopass">Open network</option>
+              </select>
+            </label>
+            <label>
+              <span>Password</span>
+              <input name="password" type="password" autocomplete="new-password">
+            </label>
+          </div>
+          <label class="check-row">
+            <input name="hidden" type="checkbox">
+            <span>Hidden network</span>
+          </label>
+        </div>
+
+        <button class="primary-button" type="submit">Generate QR code</button>
+      </form>
+    </section>
+
+    <section class="preview-panel" aria-labelledby="preview-title">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Preview</p>
+          <h2 id="preview-title">Generated code</h2>
+        </div>
+      </div>
+
+      <div id="qr-preview" class="qr-preview">
+        <p>Generate a payload to render a QR code.</p>
+      </div>
+
+      <p class="summary" data-summary>Choose values and generate a QR code.</p>
+
+      <div class="preview-actions">
+        <button id="copy-payload" type="button" disabled>Copy payload</button>
+        <button id="download-png" type="button" disabled>Download PNG</button>
+      </div>
+
+      <div class="payload-box">
+        <span>Encoded payload</span>
+        <code id="payload-output">—</code>
+      </div>
+    </section>
+
+    <section class="history-panel" aria-labelledby="history-title">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Local history</p>
+          <h2 id="history-title">Recent payloads</h2>
+        </div>
+        <button id="clear-history" type="button">Clear</button>
+      </div>
+      <div class="history-list" data-history></div>
+    </section>
+
+    <section class="explain-panel" aria-labelledby="explain-title">
+      <div>
+        <p class="eyebrow">Trust boundary</p>
+        <h2 id="explain-title">A QR code is only a container.</h2>
+      </div>
+      <div class="explain-grid">
+        <article>
+          <strong>01 / Validate</strong>
+          <p>URLs are limited to HTTP/HTTPS, email syntax is checked, and Wi-Fi values are formatted explicitly.</p>
+        </article>
+        <article>
+          <strong>02 / Inspect</strong>
+          <p>The exact encoded payload is shown before you copy or export anything.</p>
+        </article>
+        <article>
+          <strong>03 / Local only</strong>
+          <p>Generation happens in the browser and recent payloads stay in localStorage on this device.</p>
+        </article>
+        <article>
+          <strong>04 / Verify</strong>
+          <p>Scanning a QR code should not replace checking where a URL points or what action a payload performs.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <p class="sr-only" data-status aria-live="polite"></p>
+
+  <footer>
+    <span>QRForge</span>
+    <span>Vite · QRCode library · payload policies · Node tests</span>
+  </footer>
+
+  <script type="module" src="./assets/main.js"></script>
 </body>
 </html>
