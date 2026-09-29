@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "node --test",
-    "check": "node --check src/payload.js && node --check src/history.js && npm test && npm run build"
+    "check": "node --check assets/main.js && node --check src/payload.js && node --check src/history.js && npm test && npm run build"
   },
   "dependencies": {
     "qrcode": "1.5.4"
