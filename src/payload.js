@@ -21,7 +21,7 @@ export function normalizeInput(mode, values = {}) {
     const raw = String(values.url || "").trim();
     if (!raw) return { valid:false, error:"Enter a URL.", payload:"" };
 
-    const candidate = /^[a-z][a-z0-9+.-]*:///i.test(raw) ? raw : `https://${raw}`;
+    const candidate = /^[a-z][a-z0-9+.-]*:\/\//i.test(raw) ? raw : `https://${raw}`;
 
     try {
       const parsed = new URL(candidate);
