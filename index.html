@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
   <meta
     name="description"
-    content="QRForge is a browser-based QR payload lab for URL, text, email, and Wi-Fi payloads with validation, error-correction controls, PNG export, local history, tests, and CI."
+    content="QRForge is a trust-aware browser QR workbench for URL, text, email, and Wi-Fi payloads with validation, session-only history, PNG export, tests, and CI."
   >
   <meta name="color-scheme" content="light">
-  <title>QRForge — QR Payload & Export Lab</title>
+  <title>QRForge — Trust-Aware QR Payload Workbench</title>
   <link rel="stylesheet" href="./assets/style.css">
 </head>
 <body>
@@ -16,16 +17,17 @@
 
   <header class="site-header">
     <div>
-      <p class="eyebrow">Browser-only payload engineering</p>
+      <p class="eyebrow">Payload correctness · local generation · explicit trust boundary</p>
       <h1>QRForge</h1>
       <p class="subtitle">
-        Build QR payloads with explicit validation instead of encoding an arbitrary string blindly.
-        URL, text, email, and Wi-Fi formats are normalized before rendering.
+        Build QR codes from validated URL, text, email, and Wi-Fi payloads without hiding what will be encoded.
+        The workbench keeps generation local and invalidates stale exports when inputs change.
       </p>
     </div>
-    <div class="header-note">
-      QR images are generated locally. Nothing is sent to a backend by this demo.
-    </div>
+    <aside class="header-note" aria-label="Privacy note">
+      <strong>Privacy-first session.</strong>
+      Payload history stays in memory for this tab only. Nothing new is written to localStorage.
+    </aside>
   </header>
 
   <main id="workspace" class="workspace">
@@ -37,7 +39,7 @@
         </div>
       </div>
 
-      <form id="qr-form">
+      <form id="qr-form" novalidate>
         <div class="grid-two">
           <label>
             <span>Payload type</span>
@@ -73,8 +75,9 @@
         <div class="mode-panel" data-mode-panel="url">
           <label>
             <span>URL</span>
-            <input name="url" type="text" placeholder="example.com/docs" autocomplete="url">
+            <input name="url" type="text" placeholder="example.com/docs" autocomplete="url" inputmode="url">
           </label>
+          <p class="field-help">HTTP and HTTPS only. Embedded usernames or passwords are rejected.</p>
         </div>
 
         <div class="mode-panel" data-mode-panel="text" hidden>
@@ -82,6 +85,7 @@
             <span>Text</span>
             <textarea name="text" rows="5" maxlength="1200" placeholder="Plain text to encode"></textarea>
           </label>
+          <p class="field-help">Leading and trailing whitespace are preserved intentionally.</p>
         </div>
 
         <div class="mode-panel" data-mode-panel="email" hidden>
@@ -102,26 +106,30 @@
         <div class="mode-panel" data-mode-panel="wifi" hidden>
           <label>
             <span>Network name (SSID)</span>
-            <input name="ssid" type="text" maxlength="64" autocomplete="off">
+            <input name="ssid" type="text" autocomplete="off" aria-describedby="wifi-help">
           </label>
           <div class="grid-two">
             <label>
               <span>Security</span>
               <select name="security">
                 <option value="WPA">WPA/WPA2</option>
-                <option value="WEP">WEP</option>
+                <option value="WEP">WEP · legacy</option>
                 <option value="nopass">Open network</option>
               </select>
             </label>
             <label>
               <span>Password</span>
-              <input name="password" type="password" autocomplete="new-password">
+              <input name="password" type="password" autocomplete="new-password" aria-describedby="wifi-help">
             </label>
           </div>
           <label class="check-row">
             <input name="hidden" type="checkbox">
             <span>Hidden network</span>
           </label>
+          <p class="field-help" id="wifi-help">
+            SSIDs are limited to 32 UTF-8 bytes. WPA/WPA2 accepts 8–63 characters or a 64-digit hexadecimal key.
+            WEP remains available only for compatibility with legacy networks.
+          </p>
         </div>
 
         <button class="primary-button" type="submit">Generate QR code</button>
@@ -136,7 +144,7 @@
         </div>
       </div>
 
-      <div id="qr-preview" class="qr-preview">
+      <div id="qr-preview" class="qr-preview" aria-busy="false">
         <p>Generate a payload to render a QR code.</p>
       </div>
 
@@ -156,11 +164,12 @@
     <section class="history-panel" aria-labelledby="history-title">
       <div class="panel-heading">
         <div>
-          <p class="eyebrow">Local history</p>
-          <h2 id="history-title">Recent payloads</h2>
+          <p class="eyebrow">Session history</p>
+          <h2 id="history-title">Generated in this tab</h2>
         </div>
         <button id="clear-history" type="button">Clear</button>
       </div>
+      <p class="section-note">History is intentionally ephemeral and disappears on reload or tab close.</p>
       <div class="history-list" data-history></div>
     </section>
 
@@ -172,19 +181,19 @@
       <div class="explain-grid">
         <article>
           <strong>01 / Validate</strong>
-          <p>URLs are limited to HTTP/HTTPS, email syntax is checked, and Wi-Fi values are formatted explicitly.</p>
+          <p>Payload rules reject unsupported URL schemes, embedded URL credentials, invalid email inputs, and malformed Wi-Fi keys.</p>
         </article>
         <article>
-          <strong>02 / Inspect</strong>
-          <p>The exact encoded payload is shown before you copy or export anything.</p>
+          <strong>02 / Invalidate</strong>
+          <p>Changing any input invalidates the previous export so Copy and Download cannot silently use stale data.</p>
         </article>
         <article>
-          <strong>03 / Local only</strong>
-          <p>Generation happens in the browser and recent payloads stay in localStorage on this device.</p>
+          <strong>03 / Keep ephemeral</strong>
+          <p>New payloads are never persisted to localStorage. A legacy history key is removed on load.</p>
         </article>
         <article>
           <strong>04 / Verify</strong>
-          <p>Scanning a QR code should not replace checking where a URL points or what action a payload performs.</p>
+          <p>QR generation does not prove that a destination is safe. Verify scanned URLs and actions independently.</p>
         </article>
       </div>
     </section>
@@ -194,7 +203,7 @@
 
   <footer>
     <span>QRForge</span>
-    <span>Vite · QRCode library · payload policies · Node tests</span>
+    <span>Vite · QRCode · explicit payload policies · Node tests</span>
   </footer>
 
   <script type="module" src="./assets/main.js"></script>
