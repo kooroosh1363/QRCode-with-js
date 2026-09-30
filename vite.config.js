@@ -1,5 +1,5 @@
 import { defineConfig } from "vite";
 
 export default defineConfig({
-  base: process.env.GITHUB_ACTIONS ? "/QRCode-with-js/" : "/"
+  base: process.env.DEPLOY_TARGET === "github-pages" ? "/QRCode-with-js/" : "/"
 });
